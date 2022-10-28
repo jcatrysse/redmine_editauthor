@@ -1,10 +1,10 @@
-require 'redmine_editauthor'
+require File.expand_path('lib/redmine_editauthor', __dir__)
 
 Redmine::Plugin.register :redmine_editauthor do
   name "Redmine Edit Issue Author"
   author "Ralph Gutkowski"
   description "Edit author of issue."
-  version '0.11.0'
+  version '0.11.1'
   url 'https://github.com/rgtk/redmine_editauthor'
   author_url 'https://github.com/rgtk'
 
