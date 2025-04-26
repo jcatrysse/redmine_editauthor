@@ -1,0 +1,5 @@
+nl:
+  label_editauthor_members_scope: Beperk auteurs tot leden
+  text_editauthor_members_scope: Enkel projectleden kunnen als auteur ingesteld worden. Andere gebruikers met globale rechten zoals administrators zullen niet getoond worden.
+  permission_edit_issue_author: Bewerk auteur
+  permission_set_original_issue_author: Stel originele auteur in
