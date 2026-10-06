@@ -16,21 +16,21 @@ class IssuesControllerTest < ActionController::TestCase
 
   test "author field as authorized user in new" do
     session[:user_id] = 2
-    get :new, id: 1
+    get :new, params: { id: 1 }
 
     assert_select '#issue_author_id', false
   end
 
   test "author field as authorized user in edit" do
     session[:user_id] = 2
-    get :edit, id: 1
+    get :edit, params: { id: 1 }
 
     assert_select '#issue_author_id'
   end
 
   test "author field as unauthorized user in edit" do
     session[:user_id] = 3
-    get :edit, id: 1
+    get :edit, params: { id: 1 }
 
     assert_select '#issue_author_id', false
   end
@@ -39,7 +39,7 @@ class IssuesControllerTest < ActionController::TestCase
     session[:user_id] = 2
 
     assert_difference('Journal.count') do
-      put :update, id: 1, issue: { author_id: 1 }
+      put :update, params: { id: 1, issue: { author_id: 1 } }
     end
   end
 
@@ -47,7 +47,7 @@ class IssuesControllerTest < ActionController::TestCase
     session[:user_id] = 3
 
     assert_no_difference('Journal.count') do
-      put :update, id: 1, issue: { author_id: 3 }
+      put :update, params: { id: 1, issue: { author_id: 3 } }
     end
   end
 end
