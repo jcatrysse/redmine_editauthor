@@ -62,13 +62,14 @@ class IssuesControllerTest < ActionController::TestCase
     assert_equal '1', detail.value
   end
 
-  test "update author as unauthorized user keeps the author" do
+  test "update author as unauthorized user keeps the author but saves other attributes" do
     session[:user_id] = 3
 
-    assert_no_difference('Journal.count') do
-      put :update, params: { id: 1, issue: { author_id: 3 } }
-    end
-    assert_equal 2, Issue.find(1).author_id
+    put :update, params: { id: 1, issue: { author_id: 3, subject: 'changed by dlopper' } }
+
+    issue = Issue.find(1)
+    assert_equal 'changed by dlopper', issue.subject
+    assert_equal 2, issue.author_id
   end
 
   test "author field in new with set_original_issue_author" do
