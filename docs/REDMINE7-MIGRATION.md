@@ -18,7 +18,7 @@ what is left. Written 2026-10-06 from a measured analysis (report at the bottom)
 | Plugin id | `redmine_editauthor` |
 | GEOxyz runs today | `master` |
 | Upstream | nounder/redmine_editauthor master @ db98ca9 (2022-10-12) |
-| Runs on Redmine 7 as is | DEELS |
+| Runs on Redmine 7 as is | YES (tests fixed in d177c48) |
 | Upstream sync | UPSTREAM DOOD |
 | After sync | n.v.t. |
 | Complexity (1 trivial .. 5 rewrite) | 1 |
@@ -28,6 +28,7 @@ what is left. Written 2026-10-06 from a measured analysis (report at the bottom)
 ## Already on this branch
 
 - `d177c48` Use keyword params in functional tests
+- Tests and end-to-end scenarios for every function (see "Results" below); no plugin code change was needed.
 
 ## Work list for the migration session
 
@@ -43,6 +44,42 @@ In this order: things that break, security, the GEOxyz changes, the open items, 
 3. Check Redmine 7 webhooks against this plugin (see "Rules"), and note the result here even if nothing is needed.
 4. Verify every feature of the plugin by hand on a running Redmine 7 (screenshots).
 
+## Results (Redmine 7.0.1, 7.0-stable-GEOxyz, Ruby 3.3.6, 2026-10-06)
+
+| | PostgreSQL 16.15 | MariaDB 10.11.14 |
+|---|---|---|
+| Baseline minitest (before) | 5 runs, 8 assertions, 0 failures | not run |
+| minitest after (13 tests) | 13 runs, 29 assertions, 0 failures, 0 errors, 0 skips | 13 runs, 29 assertions, 0 failures, 0 errors, 0 skips |
+| e2e smoke + core | smoke 11 shots, core 6 shots, 0 problems | same, 0 problems |
+| e2e plugin scenarios (5) | 0 problems | 0 problems |
+
+Production-mode server on both databases. No migrations in this plugin (nothing to roll back). 5.1-stable was not run: no code changed, and the tests use syntax that Redmine 5.1 also accepts. Run together with other GEOxyz plugins: not done in this session (no other plugin available here); the plugin only adds `safe_attributes` and view hooks.
+
+**Webhooks (Redmine 7)**: the plugin hides nothing and adds no issue data. The author is part of core `issues/show.api.rsb` and follows the real `author_id`; changes via the plugin are normal journal changes. Verified through `/issues/:id.json` (`rest_api_author` scenario). Nothing needed.
+
+**Findings, not fixed (minimal diff rule)**
+- A non-member administrator is NOT listed as possible author in the default mode: `possible_authors` does an inner join on members, but the README and the settings text say administrators are listed. Only administrators that are project members are. Behaviour unchanged since upstream; see Open questions.
+- `it.yml` and `pl.yml` lack the two settings keys (`label_editauthor_members_scope`, `text_editauthor_members_scope`); Redmine falls back to English on the settings page. Old gap, not fixed: the keys cannot be translated by matching existing keys in those files.
+- `redmine_inline_edit_issues` bypasses the `edit_issue_author` check (mass assignment), as in the analysis.
+- The author field is moved into place by an inline `<script>` with jQuery; it works on Redmine 7 (checked after a tracker change as well).
+
+## Function inventory
+
+| function | how a user reaches it | scenario | screenshots |
+|---|---|---|---|
+| change author of an issue (`edit_issue_author`), journal shows names | issue edit form | `test/e2e/edit_issue_author.mjs` | `docs/e2e/edit-issue-author-*.png` (edit form, journal, no permission, forged request ignored, outsider refused) |
+| set author on creation (`set_original_issue_author`) | new issue form, also after tracker change | `test/e2e/set_original_issue_author.mjs` | `docs/e2e/set-original-issue-author-*.png` |
+| change author in bulk | issue list, bulk edit | `test/e2e/bulk_edit_author.mjs` | `docs/e2e/bulk-edit-author-*.png` (reporter refused 403, editor without permission has no field, forged ignored) |
+| setting "members only" | Administration > Plugins > configure | `test/e2e/members_scope_setting.mjs` | `docs/e2e/members-scope-setting-*.png` |
+| REST API `author_id` | `POST/PUT /issues.json` | `test/e2e/rest_api_author.mjs` | `docs/e2e/rest-api-author-result.png` |
+| permissions, project module | Roles and permissions | covered by the scenarios above (manager, reporter, editor, outsider) | |
+
+No routes, rake tasks, macros, mail handling or cron in this plugin.
+
+## Open questions for Jan
+
+1. Non-member administrators as author (default mode). Options: (a) leave as is, (b) list global administrators as the README says (change the query, behaviour change). Recommendation: (a) now, because GEOxyz may rely on the current list; decide before changing the text or the code. Built: (a).
+
 ## GEOxyz changes to review or re-apply
 
 These GEOxyz commits are on the branch GEOxyz runs today and therefore on this branch. Review each one against the code it now sits on (upstream merges and Redmine 7 core): drop it if upstream or core now does the same, rewrite it if it is not up to the quality rules below (tests, I18n, security, portability), keep it otherwise. Record the verdict per commit in this file.
@@ -50,6 +87,8 @@ These GEOxyz commits are on the branch GEOxyz runs today and therefore on this b
 | commit | date | subject |
 |---|---|---|
 | `6b22e8f` | 2025-04-26 | Add NL locale |
+
+Verdict `6b22e8f`: keep. `config/locales/nl.yml` has the same keys as `en.yml` (checked below), core has no overlap.
 
 ## After the upgrade (production)
 
