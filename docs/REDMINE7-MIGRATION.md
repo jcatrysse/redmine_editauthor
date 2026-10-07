@@ -78,9 +78,16 @@ Production-mode server on both databases. No migrations in this plugin (nothing 
 
 No routes, rake tasks, macros, mail handling or cron in this plugin.
 
-## Open questions for Jan
+## Decided by Jan (2026-10-07)
 
-1. Non-member administrators as author (default mode). Options: (a) leave as is, (b) list global administrators as the README says (change the query, behaviour change). Recommendation: (a) now, because GEOxyz may rely on the current list; decide before changing the text or the code. Built: (a).
+Full text in `docs/DECISIONS-2026-10-07.md`.
+
+1. **editauthor-q1, non-member administrators as author**: Jan chose A, "Zo laten (gebouwd)" (nothing changes for users; README and settings text do not match what the plugin does). Kept as built, no code change. Jan's note: none.
+2. **No backports, Redmine 7 only**: GEOxyz goes straight to Redmine 7; 5.1 compatibility is no longer a requirement.
+3. **PostgreSQL 16 only**: tests and e2e on PostgreSQL; MariaDB runs are no longer required (the MariaDB results above stay as extra information).
+4. **deface**: not used by this plugin, no Gemfile, nothing to change.
+5. **`prepend` instead of `alias_method`**: checked, this plugin has no `alias_method` and patches only `Issue` through `safe_attributes` (an `include`, not a method override), so nothing to switch. The run with the other GEOxyz plugins (`RMP_EXTRA_PLUGINS`, Project > Settings, issue list, issue page) was not done here: their repositories are not known in this session. Left for the coordinating harness.
+6. **GitHub Actions**: stay manual only.
 
 ## GEOxyz changes to review or re-apply
 
@@ -207,8 +214,7 @@ results quoted in the analysis come from it.
   (on by default: `t.sudo()` in a scenario). The breaker list is in the migration kit's CHECKLIST.md.
 - **Locales**: keep the locales the plugin ships in sync; translate a new key by matching the
   closest existing key in the same file, not from scratch; do not add new languages.
-- **5.1 compatibility**: prefer fixes that also run on Redmine 5.1 so they can be merged early;
-  say so when a fix cannot.
+- **Redmine 7 only** (decided 2026-10-07): no 5.1 compatibility, no backports, no code paths that exist only for 5.1.
 - **Git**: work on `redmine70-migration` only; never push to the default branch; never force-push
   a branch someone else uses. Descriptive commit messages (what and why). Push after every
   commit, together with the updated status in this file: a cloud session can stop at a usage
