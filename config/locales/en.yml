@@ -3,3 +3,8 @@ en:
   text_editauthor_members_scope: Only project members can be set as author. Other users with global access such as administrators won't be listed.
   permission_edit_issue_author: Edit author
   permission_set_original_issue_author: Set original author
+  label_editauthor_authors_scope: Possible authors
+  option_editauthor_project_add_issues: Project members who may add issues
+  option_editauthor_any_role: Anyone with a role that may add issues in any project
+  option_editauthor_project_members: All project members
+  text_editauthor_authors_scope: Which users can be chosen as author. The first option is the fastest on large installations.

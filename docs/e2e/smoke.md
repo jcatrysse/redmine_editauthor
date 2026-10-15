@@ -1,6 +1,6 @@
 # smoke
 
-Run 2026-10-06T19:20:29.151Z against http://127.0.0.1:3000.
+Run 2026-10-15T04:20:00.261Z against http://127.0.0.1:3000.
 
 | screenshot | user | URL | shows |
 |---|---|---|---|

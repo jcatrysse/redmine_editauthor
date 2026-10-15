@@ -30,3 +30,13 @@ editor.must_change_passwd = false
 editor.status = User::STATUS_ACTIVE
 editor.save!(validate: false)
 Member.create!(principal: editor, project: project, roles: [editor_role]) unless Member.where(user_id: editor.id, project_id: project.id).exists?
+
+# Holds a role that may add issues, but only in the private project: a possible author
+# only with the "anyone with such a role" setting.
+elsewhere = User.find_by(login: 'elsewhere') || User.new(login: 'elsewhere', firstname: 'Elsewhere', lastname: 'E2E', mail: 'elsewhere@example.net')
+elsewhere.password = elsewhere.password_confirmation = ENV.fetch('RMP_USER_PASSWORD', ENV.fetch('RMP_ADMIN_PASSWORD', 'Redmine7Test!'))
+elsewhere.must_change_passwd = false
+elsewhere.status = User::STATUS_ACTIVE
+elsewhere.save!(validate: false)
+private_project = Project.find_by!(identifier: 'e2e-private')
+Member.create!(principal: elsewhere, project: private_project, roles: [editor_role]) unless Member.where(user_id: elsewhere.id, project_id: private_project.id).exists?

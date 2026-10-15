@@ -3,3 +3,8 @@ nl:
   text_editauthor_members_scope: Enkel projectleden kunnen als auteur ingesteld worden. Andere gebruikers met globale rechten zoals administrators zullen niet getoond worden.
   permission_edit_issue_author: Bewerk auteur
   permission_set_original_issue_author: Stel originele auteur in
+  label_editauthor_authors_scope: Mogelijke auteurs
+  option_editauthor_project_add_issues: Projectleden die issues mogen toevoegen
+  option_editauthor_any_role: Iedereen met een rol die issues mag toevoegen in een willekeurig project
+  option_editauthor_project_members: Alle projectleden
+  text_editauthor_authors_scope: Welke gebruikers als auteur gekozen kunnen worden. De eerste optie is het snelst op grote installaties.

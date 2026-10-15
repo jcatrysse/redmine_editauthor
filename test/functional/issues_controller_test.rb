@@ -116,16 +116,76 @@ class IssuesControllerTest < ActionController::TestCase
     assert_equal [3, 3], Issue.where(id: [1, 2]).pluck(:author_id)
   end
 
-  test "members scope narrows the possible authors" do
-    session[:user_id] = 2
-    get :edit, params: { id: 1 }
-    default = css_select('#issue_author_id option').map { |o| o['value'].to_i }
-
-    with_settings plugin_redmine_editauthor: { 'members_scope' => '1' } do
+  def author_ids(settings = {})
+    with_settings plugin_redmine_editauthor: settings do
       get :edit, params: { id: 1 }
-      scoped = css_select('#issue_author_id option').map { |o| o['value'].to_i }
-      assert_equal Project.find(1).users.sorted.map(&:id).sort, scoped.sort
     end
-    assert_includes default, 2
+    css_select('#issue_author_id option').map { |o| o['value'].to_i }.sort
+  end
+
+  def setup_scope_users
+    # not a member of project 1, but holds a role that may add issues (project 2)
+    @elsewhere = User.generate!
+    Member.create!(user: @elsewhere, project: Project.find(2), roles: [Role.find(2)])
+    # member of project 1 with a role that may not add issues
+    viewer_role = Role.generate!(permissions: [:view_issues])
+    @viewer = User.generate!
+    Member.create!(user: @viewer, project: Project.find(1), roles: [viewer_role])
+  end
+
+  test "default scope lists project members who may add issues only" do
+    setup_scope_users
+    session[:user_id] = 2
+    ids = author_ids
+
+    assert_includes ids, 2
+    assert_not_includes ids, @elsewhere.id
+    assert_not_includes ids, @viewer.id
+  end
+
+  test "any_role scope lists everyone holding a role that may add issues" do
+    setup_scope_users
+    session[:user_id] = 2
+    ids = author_ids('authors_scope' => 'any_role')
+
+    assert_includes ids, @elsewhere.id
+    assert_not_includes ids, @viewer.id
+  end
+
+  test "project_members scope lists all project members" do
+    setup_scope_users
+    session[:user_id] = 2
+    ids = author_ids('authors_scope' => 'project_members')
+
+    assert_includes ids, @viewer.id
+    assert_not_includes ids, @elsewhere.id
+    assert_equal Project.find(1).users.sorted.map(&:id).sort, ids
+  end
+
+  test "legacy members_scope checkbox still means project_members" do
+    setup_scope_users
+    session[:user_id] = 2
+
+    assert_includes author_ids('members_scope' => '1'), @viewer.id
+    assert_not_includes author_ids('members_scope' => '1', 'authors_scope' => 'any_role'), @viewer.id
+  end
+
+  test "default scope does not grow with users outside the project" do
+    session[:user_id] = 2
+    before = author_ids
+    20.times do
+      user = User.generate!
+      Member.create!(user: user, project: Project.find(2), roles: [Role.find(2)])
+    end
+
+    assert_equal before, author_ids
+  end
+
+  test "current author stays selectable when not in the scope" do
+    setup_scope_users
+    Issue.find(1).update_column(:author_id, @elsewhere.id)
+    session[:user_id] = 2
+
+    assert_includes author_ids, @elsewhere.id
   end
 end

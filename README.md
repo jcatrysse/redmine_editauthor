@@ -24,10 +24,16 @@ form.
     
 
 #### Possible authors
- 
- By default users with global permissions such as administrators will be
- listed even if they are not participants of the project. It is possible to
- narrow possible authors to project members in plugin settings.
+
+ The plugin setting *Possible authors* decides who can be chosen as author:
+
+ * *Project members who may add issues* (default): fast, also on large installations.
+ * *Anyone with a role that may add issues in any project*: the behaviour of
+   versions up to 0.11.1.
+ * *All project members*: the former "Narrow authors to members" checkbox; a saved
+   value of that checkbox still counts until the new setting is saved.
+
+ The current author of an issue always stays selectable.
 
 
 ## Requirements

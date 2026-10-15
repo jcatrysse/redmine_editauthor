@@ -3,6 +3,8 @@ module RedmineEditauthor
     class ViewListener < Redmine::Hook::ViewListener
       include IssuesHelper
 
+      AUTHORS_SCOPES = %w[project_add_issues any_role project_members].freeze
+
       # necessary for using content_tag in Listener
       attr_accessor :output_buffer
 
@@ -55,9 +57,10 @@ module RedmineEditauthor
       private
 
       def possible_authors(project)
-        if Settings.members_scope?
+        case authors_scope
+        when 'project_members'
           project.users.sorted
-        else
+        when 'any_role'
           role_ids = Role.joins(:members)
                        .where(members: { project_id: project.id })
                        .distinct(:id)
@@ -68,7 +71,31 @@ module RedmineEditauthor
           User.active.sorted.joins(members: :roles).distinct(:id)
             .where("#{MemberRole.table_name}.role_id IN (?) OR #{User.table_name}.admin = ?",
                    role_ids, true)
+        else
+          role_ids = Role.joins(:members)
+                       .where(members: { project_id: project.id })
+                       .distinct(:id)
+                       .pluck(:id, :permissions)
+                       .select { |_, perms| perms.include?(:add_issues) }
+                       .map(&:first)
+          project_members = Member.where(project_id: project.id)
+
+          User.active.sorted
+            .where(id: project_members.joins(:member_roles)
+                                      .where(member_roles: { role_id: role_ids })
+                                      .select(:user_id))
+            .or(User.active.sorted.where(admin: true, id: project_members.select(:user_id)))
         end
+      end
+
+      # 'project_add_issues' (default): project members who may add issues,
+      # 'any_role': everyone holding such a role in any project, 'project_members': all members.
+      # The former checkbox members_scope still counts when authors_scope was never saved.
+      def authors_scope
+        scope = Settings.authors_scope
+        return scope if AUTHORS_SCOPES.include?(scope)
+
+        Settings.members_scope? ? 'project_members' : 'project_add_issues'
       end
 
       def author_select_field(options)

@@ -50,6 +50,7 @@ In this order: things that break, security, the GEOxyz changes, the open items, 
 |---|---|---|
 | Baseline minitest (before) | 5 runs, 8 assertions, 0 failures | not run |
 | minitest after (13 tests) | 13 runs, 28 assertions, 0 failures, 0 errors, 0 skips | 13 runs, 28 assertions, 0 failures, 0 errors, 0 skips |
+| minitest after the setting (18 tests, 2026-10-15) | 18 runs, 47 assertions, 0 failures, 0 errors, 0 skips | not run (PostgreSQL only, decided) |
 | e2e smoke + core | smoke 11 shots, core 6 shots, 0 problems | same, 0 problems |
 | e2e plugin scenarios (5) | 0 problems | 0 problems |
 
@@ -59,6 +60,7 @@ Production-mode server on both databases. No migrations in this plugin (nothing 
 
 **Findings, not fixed (minimal diff rule)**
 - A non-member administrator is NOT listed as possible author in the default mode: `possible_authors` does an inner join on members, but the README and the settings text say administrators are listed. Only administrators that are project members are. Behaviour unchanged since upstream; see Open questions.
+- The new setting keys exist in `en.yml` and `nl.yml` only; other locales fall back to English (no translation from scratch, per the locale rule).
 - `it.yml` and `pl.yml` lack the two settings keys (`label_editauthor_members_scope`, `text_editauthor_members_scope`); Redmine falls back to English on the settings page. Old gap, not fixed: the keys cannot be translated by matching existing keys in those files.
 - `redmine_inline_edit_issues` bypasses the `edit_issue_author` check (mass assignment), as in the analysis.
 - The author field is moved into place by an inline `<script>` with jQuery; it works on Redmine 7 (checked after a tracker change as well).
@@ -72,7 +74,7 @@ Production-mode server on both databases. No migrations in this plugin (nothing 
 | change author of an issue (`edit_issue_author`), journal shows names | issue edit form | `test/e2e/edit_issue_author.mjs` | `docs/e2e/edit-issue-author-*.png` (edit form, journal, no permission, forged request ignored, outsider refused) |
 | set author on creation (`set_original_issue_author`) | new issue form, also after tracker change | `test/e2e/set_original_issue_author.mjs` | `docs/e2e/set-original-issue-author-*.png` |
 | change author in bulk | issue list, bulk edit | `test/e2e/bulk_edit_author.mjs` | `docs/e2e/bulk-edit-author-*.png` (reporter refused 403, editor without permission has no field, forged ignored) |
-| setting "members only" | Administration > Plugins > configure | `test/e2e/members_scope_setting.mjs` | `docs/e2e/members-scope-setting-*.png` |
+| setting "Possible authors" (3 stages) | Administration > Plugins > configure | `test/e2e/members_scope_setting.mjs` | `docs/e2e/members-scope-setting-*.png` (default, each stage with the resulting list, no permission, settings refused to outsider) |
 | REST API `author_id` | `POST/PUT /issues.json` | `test/e2e/rest_api_author.mjs` | `docs/e2e/rest-api-author-result.png` |
 | permissions, project module | Roles and permissions | covered by the scenarios above (manager, reporter, editor, outsider) | |
 
@@ -88,6 +90,7 @@ Full text in `docs/DECISIONS-2026-10-07.md`.
 4. **deface**: not used by this plugin, no Gemfile, nothing to change.
 5. **`prepend` instead of `alias_method`**: checked, this plugin has no `alias_method` and patches only `Issue` through `safe_attributes` (an `include`, not a method override), so nothing to switch. The run with the other GEOxyz plugins (`RMP_EXTRA_PLUGINS`, Project > Settings, issue list, issue page) was not done here: their repositories are not known in this session. Left for the coordinating harness.
 6. **GitHub Actions**: stay manual only.
+7. **Possible authors made configurable, default stage 2** (Jan, 2026-10-15, in this session: "bouw het, standaard stand 2"): setting `authors_scope` with three stages, `project_add_issues` (default: project members who may add issues, plus administrators that are members, plus the current author), `any_role` (the old behaviour: anyone holding such a role in any project) and `project_members` (all members, the old checkbox). Built in the commit "Make the possible authors configurable"; tests in `issues_controller_test.rb` (4 fail without the change). Reason: with 1000 users the hook rendered about 870 options in about 65 ms on every issue page (measured by the coordinator, not reproduced here). The request memoization asked for was not built: the hook runs once per request, so there is nothing to memoize.
 
 ## GEOxyz changes to review or re-apply
 
@@ -103,7 +106,7 @@ Verdict `6b22e8f`: keep. `config/locales/nl.yml` has the same keys as `en.yml` (
 
 Actions the person doing the upgrade must take, or know about, for this plugin:
 
-- None known. Add here what the session finds.
+- The default for *Possible authors* is now "Project members who may add issues". Installations that relied on the old list (anyone with such a role in any project) must set it to "Anyone with a role that may add issues in any project" in Administration > Plugins > Redmine Edit Issue Author. A saved "members only" checkbox keeps meaning "All project members".
 
 ## How to test
 
