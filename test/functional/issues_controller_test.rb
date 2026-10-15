@@ -188,4 +188,14 @@ class IssuesControllerTest < ActionController::TestCase
 
     assert_includes author_ids, @elsewhere.id
   end
+
+  test "default scope includes users who are members through a group" do
+    group = Group.generate!
+    user = User.generate!
+    group.users << user
+    Member.create!(principal: group, project: Project.find(1), roles: [Role.find(2)])
+    session[:user_id] = 2
+
+    assert_includes author_ids, user.id
+  end
 end

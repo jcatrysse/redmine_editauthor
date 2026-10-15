@@ -50,7 +50,7 @@ In this order: things that break, security, the GEOxyz changes, the open items, 
 |---|---|---|
 | Baseline minitest (before) | 5 runs, 8 assertions, 0 failures | not run |
 | minitest after (13 tests) | 13 runs, 28 assertions, 0 failures, 0 errors, 0 skips | 13 runs, 28 assertions, 0 failures, 0 errors, 0 skips |
-| minitest after the setting (18 tests, 2026-10-15) | 18 runs, 47 assertions, 0 failures, 0 errors, 0 skips | not run (PostgreSQL only, decided) |
+| minitest after the setting (19 tests, 2026-10-15) | 19 runs, 49 assertions, 0 failures, 0 errors, 0 skips | not run (PostgreSQL only, decided) |
 | e2e smoke + core | smoke 11 shots, core 6 shots, 0 problems | same, 0 problems |
 | e2e plugin scenarios (5) | 0 problems | 0 problems |
 
@@ -64,6 +64,8 @@ Production-mode server on both databases. No migrations in this plugin (nothing 
 - `it.yml` and `pl.yml` lack the two settings keys (`label_editauthor_members_scope`, `text_editauthor_members_scope`); Redmine falls back to English on the settings page. Old gap, not fixed: the keys cannot be translated by matching existing keys in those files.
 - `redmine_inline_edit_issues` bypasses the `edit_issue_author` check (mass assignment), as in the analysis.
 - The author field is moved into place by an inline `<script>` with jQuery; it works on Redmine 7 (checked after a tracker change as well).
+
+**OpenAI review of the setting** (`docs/reviews/openai-2026-10-15-*.md`): 2 findings, both resolved with reasons (group members are included, shown by a test; missing it/pl keys by rule).
 
 **OpenAI review** (gpt-5, `docs/reviews/`): 9 findings, 1 test fixed, 1 assertion made locale independent, 4 rejected as wrong (the `setup` block grants the permission, transactions roll back), 3 kept with reasons. A review re-run after the fixes is not done. The shared workflow uploads `redmine/log/*.log` as an artifact on e2e runs (not this plugin's change); consider the log content before using it on a repository with wider read access.
 
