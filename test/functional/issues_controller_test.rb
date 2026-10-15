@@ -12,6 +12,24 @@ class IssuesControllerTest < ActionController::TestCase
     # Add permission to Manager role (hence, to jsmith)
     manager_role = Role.find(1)
     manager_role.add_permission!(:edit_issue_author)
+    grant_view_issue_description(Role.find(1), Role.find(2))
+  end
+
+  # redmine_view_issue_description hides the issue (and so the edit form and updates) from
+  # roles without its permission; the roles these tests use must have it when it is installed.
+  def grant_view_issue_description(*roles)
+    return unless Redmine::Plugin.installed?(:redmine_view_issue_description)
+
+    roles.each { |role| role.add_permission!(:view_issue_description) }
+  end
+
+  test "test roles keep view_issue_description when redmine_view_issue_description is installed" do
+    if Redmine::Plugin.installed?(:redmine_view_issue_description)
+      assert Role.find(1).has_permission?(:view_issue_description)
+      assert Role.find(2).has_permission?(:view_issue_description)
+    else
+      assert_not Role.find(1).has_permission?(:view_issue_description)
+    end
   end
 
   test "author field as authorized user in new" do
@@ -129,6 +147,7 @@ class IssuesControllerTest < ActionController::TestCase
     Member.create!(user: @elsewhere, project: Project.find(2), roles: [Role.find(2)])
     # member of project 1 with a role that may not add issues
     viewer_role = Role.generate!(permissions: [:view_issues])
+    grant_view_issue_description(viewer_role)
     @viewer = User.generate!
     Member.create!(user: @viewer, project: Project.find(1), roles: [viewer_role])
   end
